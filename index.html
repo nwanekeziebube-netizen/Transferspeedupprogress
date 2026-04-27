@@ -101,9 +101,7 @@
         .progress-fill {
             position: absolute;
             top: 0; left: 0; height: 100%;
-            background: #cbf1c4; 
-            width: 0%; 
-            transition: width 0.5s linear;
+            transition: width 0.5s linear, background-color 0.8s linear;
         }
 
         .wave {
@@ -163,17 +161,19 @@
         }
 
         .btn {
-            padding: 10px;
+            padding: 12px;
             border: none;
             color: white;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
             text-align: center;
+            border-radius: 4px;
         }
 
         .btn-refund { background-color: #2e7d32; }
         .btn-lose { background-color: #c62828; }
+        .btn-boost { background-color: #0078D7; font-size: 14px; }
 
         .details p {
             margin: 3px 0;
@@ -209,6 +209,45 @@
         }
 
         .paused { animation-play-state: paused !important; }
+
+        /* Nitro Boost Popup */
+        .popup {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background: white;
+            width: 90%;
+            max-width: 340px;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .popup-content h2 {
+            color: #0078D7;
+            margin: 10px 0 15px;
+        }
+
+        .popup-content p {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2e7d32;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -244,7 +283,7 @@
         </div>
 
         <div class="error-box" id="errorBox">
-            <div class="error-text">
+            <div class="error-text" id="errorMessage">
                 CRITICAL ERROR: Speed-up money used up! You must choose to REFUND and RESTART from 98% (secures all funds), or LOSE ALL YOUR PROGRESS.
             </div>
             <div class="error-buttons">
@@ -267,14 +306,29 @@
     </div>
 </div>
 
+<!-- Nitro Boost Popup -->
+<div class="popup" id="boostPopup">
+    <div class="popup-content">
+        <h2>🚀 Nitro Boost Required</h2>
+        <p>Speed has slowed down due to insufficient funds.<br>
+        Purchase <strong>80 Nitro Boost</strong> to finish the transfer quickly!</p>
+        
+        <div class="price">$77.90</div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" style="background: #c62828; flex: 1;" onclick="hidePopup()">CANCEL</button>
+            <button class="btn btn-boost" style="flex: 1;" onclick="buyBoost()">BUY 80 NITRO BOOST - $77.90</button>
+        </div>
+        
+        <p style="font-size: 11px; color: #666; margin-top: 15px;">
+            Instant activation • Secure payment
+        </p>
+    </div>
+</div>
+
 <script>
-    // Total target amount
     const totalGBP = 6415.90;
-    
-    // We start just before the 98% mark (6287.58 GBP) so you don't have to wait 4 days to see the error.
-    // If you want it to start from zero, change this to: let currentGBP = 0;
     let currentGBP = 6286.50; 
-    
     let transferInterval;
     let errorTriggered = false;
 
@@ -283,35 +337,39 @@
     const timeRemainingText = document.getElementById('timeRemaining');
     const itemsRemainingText = document.getElementById('itemsRemaining');
     const errorBox = document.getElementById('errorBox');
+    const errorMessage = document.getElementById('errorMessage');
     const waveGraph = document.getElementById('waveGraph');
+    const boostPopup = document.getElementById('boostPopup');
 
     function formatTime(minutes) {
         if (minutes <= 0) return "About 0 seconds";
         let hours = Math.floor(minutes / 60);
         let mins = Math.floor(minutes % 60);
-        
         if (hours > 0) {
             return `About ${hours} Hours ${mins} Minutes`;
         }
         return `About ${mins} Minutes`;
     }
 
+    function getProgressColor(percentage) {
+        if (percentage <= 50) return '#4ade80';        // Green
+        if (percentage <= 75) return '#fbbf24';        // Orange
+        return '#ef4444';                              // Red
+    }
+
     function updateUI() {
-        // Calculate exact percentage
         let percentage = (currentGBP / totalGBP) * 100;
         
-        // Trigger Error exactly at 98%
         if (percentage >= 98 && !errorTriggered) {
             triggerError();
-            percentage = 98; 
-            currentGBP = totalGBP * 0.98; // lock to exactly 98%
+            percentage = 98;
+            currentGBP = totalGBP * 0.98;
         }
 
-        // Display percentage with 1 decimal place to show live movement
         percentText.innerText = `${Math.floor(percentage)}% complete`;
         progressFill.style.width = `${percentage}%`;
+        progressFill.style.backgroundColor = getProgressColor(percentage);
 
-        // Because speed is 1 GBP per minute, the remaining GBP equals the remaining minutes
         let gbpLeft = totalGBP - currentGBP;
         timeRemainingText.innerText = formatTime(gbpLeft);
         itemsRemainingText.innerText = `1 (£${gbpLeft.toFixed(2)} of £${totalGBP.toFixed(2)})`;
@@ -319,7 +377,6 @@
 
     function processTransfer() {
         if (currentGBP < totalGBP && !errorTriggered) {
-            // Adds 1/60th of a pound every second (equals exactly 1 GBP per minute)
             currentGBP += (1 / 60); 
             updateUI();
         } else if (currentGBP >= totalGBP) {
@@ -333,34 +390,78 @@
 
     function triggerError() {
         errorTriggered = true;
-        clearInterval(transferInterval); 
-        errorBox.style.display = 'block'; 
-        waveGraph.classList.add('paused'); 
+        clearInterval(transferInterval);
+        waveGraph.classList.add('paused');
+
+        // Updated error message
+        errorMessage.innerHTML = `
+            CRITICAL ERROR: Speed-up money used up!<br>
+            <strong>Speed has slowed down due to insufficient funds.</strong><br><br>
+            Add funds to finish up boosting and complete the transfer.
+        `;
+
+        errorBox.style.display = 'block';
+        
+        // Show "Add Funds" button instead of original options
+        errorBox.querySelector('.error-buttons').innerHTML = `
+            <div class="btn btn-boost" onclick="showBoostPopup()">ADD FUNDS & BOOST TRANSFER</div>
+            <div class="btn btn-lose" onclick="handleLose()">CONTINUE WITHOUT BOOST (SLOW)</div>
+        `;
+    }
+
+    function showBoostPopup() {
+        boostPopup.style.display = 'flex';
+    }
+
+    function hidePopup() {
+        boostPopup.style.display = 'none';
+    }
+
+    function buyBoost() {
+        hidePopup();
+        alert("✅ Payment successful!\n\n80 Nitro Boost activated.\n\nTransfer speed increased to 500 GBP/min!\n\n(You will now reach 100% very quickly...)");
+        
+        // Simulate fast completion after purchase
+        errorBox.style.display = 'none';
+        errorTriggered = false;
+        
+        // Boost speed dramatically
+        clearInterval(transferInterval);
+        transferInterval = setInterval(() => {
+            currentGBP += 50; // Very fast boost
+            if (currentGBP >= totalGBP) {
+                currentGBP = totalGBP;
+                clearInterval(transferInterval);
+                percentText.innerText = `100% complete`;
+                timeRemainingText.innerText = "Complete";
+                itemsRemainingText.innerText = `0 (£0.00 of £${totalGBP.toFixed(2)})`;
+                waveGraph.classList.add('paused');
+            }
+            updateUI();
+        }, 100);
     }
 
     function handleRestart() {
         errorBox.style.display = 'none';
         errorTriggered = false;
-        currentGBP = totalGBP * 0.98; // Start exactly at 98%
+        currentGBP = totalGBP * 0.98;
         waveGraph.classList.remove('paused');
         updateUI();
-        transferInterval = setInterval(processTransfer, 1000); 
+        transferInterval = setInterval(processTransfer, 1000);
     }
 
     function handleLose() {
         errorBox.style.display = 'none';
         errorTriggered = false;
-        currentGBP = 0; // Lose all progress
+        currentGBP = 0;
         waveGraph.classList.remove('paused');
         updateUI();
-        transferInterval = setInterval(processTransfer, 1000); 
+        transferInterval = setInterval(processTransfer, 1000);
     }
 
+    // Initialize
     updateUI();
-
-    // Runs every 1 second (1000ms) to create a smooth, live-updating animation
     transferInterval = setInterval(processTransfer, 1000);
-
 </script>
 </body>
 </html>
