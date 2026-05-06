@@ -279,7 +279,7 @@
             <div class="progress-fill" id="progressFill"></div>
             <div class="wave" id="waveGraph"></div>
             <div class="graph-baseline"></div>
-            <div class="speed-text">Speed: 4 GBP/sec</div>
+            <div class="speed-text">Speed: 100 GBP/sec</div>
         </div>
 
         <div class="error-box" id="errorBox">
@@ -383,15 +383,15 @@
 
         let gbpLeft = totalGBP - currentGBP;
         if (gbpLeft < 0) gbpLeft = 0;
-        // Adjusting time remaining for visual accuracy to match 4gbp/sec speed
-        let timeInMinutesLeft = (gbpLeft / 4) / 60; 
+        // Adjusting time remaining for visual accuracy to match 100gbp/sec speed
+        let timeInMinutesLeft = (gbpLeft / 100) / 60; 
         timeRemainingText.innerText = formatTime(timeInMinutesLeft);
         itemsRemainingText.innerText = `1 (£${gbpLeft.toFixed(2)} of £${totalGBP.toFixed(2)})`;
     }
 
     function processTransfer() {
         if (currentGBP < totalGBP && !errorTriggered) {
-            currentGBP += 4; // Moved slowly at 4 GBP every second
+            currentGBP += 100; // Increased speed to 100 GBP every second
             updateUI();
         } else if (currentGBP >= totalGBP) {
             clearInterval(transferInterval);
