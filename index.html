@@ -210,7 +210,7 @@
 
         .paused { animation-play-state: paused !important; }
 
-        /* Nitro Boost Popup */
+        /* Popup styling used for both Nitro Boost and Completion */
         .popup {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -264,7 +264,7 @@
 
     <div class="content">
         <div class="sub-header">
-            Transferring funds to NatWest Account (\\Server)
+            Transferring funds to NatWest Account (\Server)
         </div>
         
         <div class="title-row">
@@ -279,7 +279,7 @@
             <div class="progress-fill" id="progressFill"></div>
             <div class="wave" id="waveGraph"></div>
             <div class="graph-baseline"></div>
-            <div class="speed-text">Speed: 1 GBP/min</div>
+            <div class="speed-text">Speed: 4 GBP/sec</div>
         </div>
 
         <div class="error-box" id="errorBox">
@@ -326,9 +326,22 @@
     </div>
 </div>
 
+<!-- Completion Confirmation Popup -->
+<div class="popup" id="completionPopup">
+    <div class="popup-content">
+        <h2>Action Required</h2>
+        <p>Please confirm the transfer of the money to the provided account.</p>
+        <div class="price" id="completionTimer" style="color: #c62828;">01:00</div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-boost" style="flex: 1;">CONFIRM TRANSFER</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const totalGBP = 6415.90;
-    let currentGBP = 6286.50; 
+    let currentGBP = totalGBP * 0.01; // Started the progress from 1%
     let transferInterval;
     let errorTriggered = false;
 
@@ -340,6 +353,8 @@
     const errorMessage = document.getElementById('errorMessage');
     const waveGraph = document.getElementById('waveGraph');
     const boostPopup = document.getElementById('boostPopup');
+    const completionPopup = document.getElementById('completionPopup');
+    const completionTimerText = document.getElementById('completionTimer');
 
     function formatTime(minutes) {
         if (minutes <= 0) return "About 0 seconds";
@@ -360,24 +375,23 @@
     function updateUI() {
         let percentage = (currentGBP / totalGBP) * 100;
         
-        if (percentage >= 98 && !errorTriggered) {
-            triggerError();
-            percentage = 98;
-            currentGBP = totalGBP * 0.98;
-        }
+        if (percentage > 100) percentage = 100;
 
         percentText.innerText = `${Math.floor(percentage)}% complete`;
         progressFill.style.width = `${percentage}%`;
         progressFill.style.backgroundColor = getProgressColor(percentage);
 
         let gbpLeft = totalGBP - currentGBP;
-        timeRemainingText.innerText = formatTime(gbpLeft);
+        if (gbpLeft < 0) gbpLeft = 0;
+        // Adjusting time remaining for visual accuracy to match 4gbp/sec speed
+        let timeInMinutesLeft = (gbpLeft / 4) / 60; 
+        timeRemainingText.innerText = formatTime(timeInMinutesLeft);
         itemsRemainingText.innerText = `1 (£${gbpLeft.toFixed(2)} of £${totalGBP.toFixed(2)})`;
     }
 
     function processTransfer() {
         if (currentGBP < totalGBP && !errorTriggered) {
-            currentGBP += (1 / 60); 
+            currentGBP += 4; // Moved slowly at 4 GBP every second
             updateUI();
         } else if (currentGBP >= totalGBP) {
             clearInterval(transferInterval);
@@ -385,7 +399,27 @@
             timeRemainingText.innerText = "Complete";
             itemsRemainingText.innerText = `0 (£0.00 of £${totalGBP.toFixed(2)})`;
             waveGraph.classList.add('paused');
+            
+            // Trigger confirmation popup across whole page with 1 min timer
+            showCompletionNotification();
         }
+    }
+
+    function showCompletionNotification() {
+        completionPopup.style.display = 'flex';
+        let timeLeft = 60;
+        
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            let mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let secs = (timeLeft % 60).toString().padStart(2, '0');
+            completionTimerText.innerText = `${mins}:${secs}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                completionTimerText.innerText = "00:00";
+            }
+        }, 1000);
     }
 
     function triggerError() {
