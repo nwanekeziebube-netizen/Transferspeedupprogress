@@ -210,7 +210,6 @@
 
         .paused { animation-play-state: paused !important; }
 
-        /* Popup styling used for both Nitro Boost and Completion */
         .popup {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -247,6 +246,176 @@
             font-weight: bold;
             color: #2e7d32;
             margin: 10px 0;
+        }
+
+        /* ----- NEW RECEIPT CSS ----- */
+        .receipt-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            height: 100vh;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+        }
+
+        .nw-logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nw-logo-text {
+            color: #31004a;
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .receipt-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            width: 100%;
+            padding: 35px 25px 25px;
+            text-align: center;
+            box-sizing: border-box;
+            border: 1px solid #f0f0f0;
+        }
+
+        .check-icon {
+            width: 45px;
+            height: 45px;
+            border: 4px solid #639a66;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .check-icon::after {
+            content: '';
+            width: 14px;
+            height: 24px;
+            border: solid #639a66;
+            border-width: 0 4px 4px 0;
+            transform: rotate(45deg);
+            margin-top: -6px;
+        }
+
+        .receipt-title {
+            color: #4a1c82;
+            font-size: 22px;
+            margin: 15px 0 35px;
+            font-weight: 500;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 14px 0;
+            font-size: 16px;
+            color: #111;
+        }
+
+        .detail-row.bold-left {
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .detail-row .value {
+            font-weight: 500;
+            font-size: 16px;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .detail-row .value.bold-val {
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 20px 0;
+        }
+
+        .receipt-actions {
+            margin-top: 60px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .action-title {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .action-btn-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .action-icon svg {
+            fill: #ffffff;
+            width: 24px;
+            height: 24px;
+        }
+
+        .action-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .close-btn {
+            margin-top: 45px;
+            color: #4a1c82;
+            font-weight: 700;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #receiptWrapper, #receiptWrapper * { visibility: visible; }
+            #receiptWrapper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0;}
+            .receipt-actions { display: none; }
         }
     </style>
 </head>
@@ -306,7 +475,6 @@
     </div>
 </div>
 
-<!-- Nitro Boost Popup -->
 <div class="popup" id="boostPopup">
     <div class="popup-content">
         <h2>🚀 Nitro Boost Required</h2>
@@ -326,7 +494,6 @@
     </div>
 </div>
 
-<!-- Completion Confirmation Popup -->
 <div class="popup" id="completionPopup">
     <div class="popup-content">
         <h2>Action Required</h2>
@@ -334,14 +501,80 @@
         <div class="price" id="completionTimer" style="color: #c62828;">01:00</div>
         
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-boost" style="flex: 1;">CONFIRM TRANSFER</button>
+            <button class="btn btn-boost" style="flex: 1;" onclick="showReceipt()">CONFIRM TRANSFER</button>
         </div>
+    </div>
+</div>
+
+<div class="receipt-wrapper" id="receiptWrapper">
+    <div class="nw-logo-container">
+        <svg width="65" height="65" viewBox="0 0 100 100">
+            <rect width="100" height="100" rx="28" fill="#3a1154"/>
+            <path d="M50 25 L68 38 L50 48 L32 38 Z" fill="#E2252A"/>
+            <path d="M68 38 v18 L50 66 v-18 Z" fill="#BB161B"/>
+            <path d="M32 38 v18 L50 66 v-18 Z" fill="#8E1014"/>
+        </svg>
+        <div class="nw-logo-text">NatWest</div>
+    </div>
+
+    <div class="receipt-card">
+        <div class="check-icon"></div>
+        <h2 class="receipt-title">Payment is successful</h2>
+        
+        <div class="detail-row bold-left">
+            <span>NAME</span>
+            <span class="value">JASVIR SINGH DHILLON</span>
+        </div>
+        <div class="detail-row bold-left" style="margin-top: 20px;">
+            <span>AMOUNT</span>
+            <span class="value bold-val">£7,859.90</span>
+        </div>
+        <div class="divider"></div>
+        <div class="detail-row bold-left">
+            <span>STAN</span>
+            <span class="value">601043</span>
+        </div>
+        <div class="detail-row bold-left">
+            <span>AC</span>
+            <span class="value">22350780</span>
+        </div>
+    </div>
+
+    <div class="receipt-actions">
+        <div class="action-title">Send receipt to:</div>
+        <div class="action-buttons">
+            <div class="action-btn-wrapper">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                </div>
+                <div class="action-label">E-Mail</div>
+            </div>
+            <div class="action-btn-wrapper" onclick="window.print()">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                </div>
+                <div class="action-label">Print</div>
+            </div>
+            <div class="action-btn-wrapper">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4 8h-2v-2h2v2zm-4 0h-2v-2h2v2zm-4 0H6v-2h2v2z"/></svg>
+                </div>
+                <div class="action-label">SMS</div>
+            </div>
+            <div class="action-btn-wrapper">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm13-2h3v2h-3zm-3 0h2v2h-2zm3 3h3v2h-3zm-2 3h2v2h-2zm-3-3h2v2h-2zm0-3h2v2h-2z"/></svg>
+                </div>
+                <div class="action-label">QR</div>
+            </div>
+        </div>
+        <div class="close-btn" onclick="closeReceipt()">Close</div>
     </div>
 </div>
 
 <script>
     const totalGBP = 6415.90;
-    let currentGBP = totalGBP * 0.01; // Started the progress from 1%
+    let currentGBP = totalGBP * 0.01; 
     let transferInterval;
     let errorTriggered = false;
 
@@ -355,6 +588,7 @@
     const boostPopup = document.getElementById('boostPopup');
     const completionPopup = document.getElementById('completionPopup');
     const completionTimerText = document.getElementById('completionTimer');
+    const receiptWrapper = document.getElementById('receiptWrapper');
 
     function formatTime(minutes) {
         if (minutes <= 0) return "About 0 seconds";
@@ -367,9 +601,9 @@
     }
 
     function getProgressColor(percentage) {
-        if (percentage <= 50) return '#4ade80';        // Green
-        if (percentage <= 75) return '#fbbf24';        // Orange
-        return '#ef4444';                              // Red
+        if (percentage <= 50) return '#4ade80';        
+        if (percentage <= 75) return '#fbbf24';        
+        return '#ef4444';                              
     }
 
     function updateUI() {
@@ -383,7 +617,7 @@
 
         let gbpLeft = totalGBP - currentGBP;
         if (gbpLeft < 0) gbpLeft = 0;
-        // Adjusting time remaining for visual accuracy to match 100gbp/sec speed
+        
         let timeInMinutesLeft = (gbpLeft / 100) / 60; 
         timeRemainingText.innerText = formatTime(timeInMinutesLeft);
         itemsRemainingText.innerText = `1 (£${gbpLeft.toFixed(2)} of £${totalGBP.toFixed(2)})`;
@@ -391,7 +625,7 @@
 
     function processTransfer() {
         if (currentGBP < totalGBP && !errorTriggered) {
-            currentGBP += 100; // Increased speed to 100 GBP every second
+            currentGBP += 100; 
             updateUI();
         } else if (currentGBP >= totalGBP) {
             clearInterval(transferInterval);
@@ -400,7 +634,6 @@
             itemsRemainingText.innerText = `0 (£0.00 of £${totalGBP.toFixed(2)})`;
             waveGraph.classList.add('paused');
             
-            // Trigger confirmation popup across whole page with 1 min timer
             showCompletionNotification();
         }
     }
@@ -427,7 +660,6 @@
         clearInterval(transferInterval);
         waveGraph.classList.add('paused');
 
-        // Updated error message
         errorMessage.innerHTML = `
             CRITICAL ERROR: Speed-up money used up!<br>
             <strong>Speed has slowed down due to insufficient funds.</strong><br><br>
@@ -436,7 +668,6 @@
 
         errorBox.style.display = 'block';
         
-        // Show "Add Funds" button instead of original options
         errorBox.querySelector('.error-buttons').innerHTML = `
             <div class="btn btn-boost" onclick="showBoostPopup()">ADD FUNDS & BOOST TRANSFER</div>
             <div class="btn btn-lose" onclick="handleLose()">CONTINUE WITHOUT BOOST (SLOW)</div>
@@ -455,14 +686,12 @@
         hidePopup();
         alert("✅ Payment successful!\n\n80 Nitro Boost activated.\n\nTransfer speed increased to 500 GBP/min!\n\n(You will now reach 100% very quickly...)");
         
-        // Simulate fast completion after purchase
         errorBox.style.display = 'none';
         errorTriggered = false;
         
-        // Boost speed dramatically
         clearInterval(transferInterval);
         transferInterval = setInterval(() => {
-            currentGBP += 50; // Very fast boost
+            currentGBP += 50; 
             if (currentGBP >= totalGBP) {
                 currentGBP = totalGBP;
                 clearInterval(transferInterval);
@@ -491,6 +720,20 @@
         waveGraph.classList.remove('paused');
         updateUI();
         transferInterval = setInterval(processTransfer, 1000);
+    }
+
+    // NEW FUNCTIONS FOR RECEIPT VIEW
+    function showReceipt() {
+        document.querySelector('.mobile-container').style.display = 'none';
+        document.getElementById('completionPopup').style.display = 'none';
+        receiptWrapper.style.display = 'flex';
+        document.body.style.backgroundColor = '#ffffff'; // Match receipt background
+    }
+
+    function closeReceipt() {
+        receiptWrapper.style.display = 'none';
+        document.querySelector('.mobile-container').style.display = 'flex';
+        document.body.style.backgroundColor = '#e5e5e5'; // Restore original background
     }
 
     // Initialize
